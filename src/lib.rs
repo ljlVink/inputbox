@@ -1,24 +1,23 @@
 //! Cross-platform input box library.
 //!
-//! This library provides a unified API for showing input dialogs across different platforms:
-//! - **Unix/Linux**: Uses `zenity`
-//! - **Windows**: Uses PowerShell with WinForms
-//! - **macOS**: Uses AppleScript
+//! The entry point is the [`InputBox`] struct, which you can configure using
+//! the builder pattern and then call `run()` to display the input dialog and
+//! get the user's input.
 //!
 //! # Usage
 //!
-//! ```rust
-//! use inputbox::{InputBox, InputMode};
+//! ```rust,ignore
+//! use inputbox::InputBox;
 //!
-//! let input = InputBox::new("Title", "Please enter your name")
-//!     .default("John Doe")
-//!     .mode(InputMode::Text)
-//!     .ok_button("Submit")
-//!     .cancel_label("Cancel");
-//!
-//! // Use the default backend for your platform
-//! let result = input.run_with(&inputbox::backend::Zenity::default());
+//! let input = InputBox::new().title("Title").prompt("Prompt").default_text("Default");
+//! let result: Option<String> = input.run();
+//! // Or use a specific backend:
+//! // let result = input.run_with(&inputbox::backend::Zenity::default());
+//! println!("Result: {:?}", result);
 //! ```
+//!
+//! See [`crate::backend`] for details on the available backends and their
+//! individual features and limitations.
 
 pub mod backend;
 

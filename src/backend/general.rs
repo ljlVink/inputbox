@@ -5,7 +5,7 @@ use crate::{
     backend::{Backend, run_command},
 };
 
-/// Zenity backend for Unix-like systems.
+/// Zenity backend.
 ///
 /// This backend uses the `zenity` command-line tool to display input dialogs.
 /// It requires `zenity` to be installed on the system.
@@ -81,7 +81,7 @@ impl Backend for Zenity {
     }
 }
 
-/// [`yad`](https://github.com/v1cont/yad) backend for Unix-like systems.
+/// [`yad`](https://github.com/v1cont/yad) backend.
 ///
 /// This backend uses the `yad` command-line tool to display input dialogs. It
 /// requires `yad` to be installed on the system.

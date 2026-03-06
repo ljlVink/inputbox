@@ -1,22 +1,10 @@
 //! Backend implementations for different platforms.
 //!
 //! This module provides platform-specific backends for showing input dialogs:
-//! - [`Zenity`] for Unix-like systems (Linux, BSD)
-//! - `PSScript` for Windows (Windows only)
-//! - `AppleScript` for macOS (macOS only)
-//!
-//! # Choosing a Backend
-//!
-//! The appropriate backend is automatically selected based on your target OS.
-//! Use the `Backend` trait to run an [`InputBox`] with any backend:
-//!
-//! ```rust,ignore
-//! use inputbox::{InputBox, InputMode};
-//! use inputbox::backend::Backend;
-//!
-//! let input = InputBox::new("Title", "Enter something");
-//! let result = input.run_with(&inputbox::backend::Zenity::default());
-//! ```
+//! - `PSScript`: PowerShell script backend for Windows (Windows only)
+//! - `JXAScript`: JavaScript for Automation backend for macOS (macOS only)
+//! - `Yad`: [`yad`](https://github.com/v1cont/yad) backend.
+//! - `Zenity`: Zenity backend.
 
 use std::{
     io::Write,
