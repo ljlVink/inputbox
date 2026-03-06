@@ -54,7 +54,7 @@ impl Backend for JXAScript {
             .as_deref()
             .unwrap_or(DEFAULT_CANCEL_LABEL);
         let ok_label = input.ok_label.as_deref().unwrap_or(DEFAULT_OK_LABEL);
-        let value = json!({
+        let value = serde_json::json!({
             "title": input.title,
             "prompt": input.prompt,
             "default": input.default,
@@ -71,6 +71,6 @@ impl Backend for JXAScript {
         let mut cmd = Command::new(&*self.path);
         cmd.args(["-l", "JavaScript", "-e", JXA_SCRIPT]);
 
-        run_command(&mut cmd, None, input.quiet)
+        run_command(&mut cmd, stdin.as_deref(), input.quiet)
     }
 }

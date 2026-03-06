@@ -3,7 +3,11 @@ name = "inputbox"
 version = "0.1.0"
 edition = "2024"
 
-[dependencies]
+[lib]
 
-[target.'cfg(target_os = "windows")'.dependencies]
+[[example]]
+name = "macos-example"
+path = "examples/macos.rs"
+
+[dependencies]
 serde_json = "1.0"
