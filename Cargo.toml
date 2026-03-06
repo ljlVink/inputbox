@@ -1,0 +1,9 @@
+[package]
+name = "inputbox"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+
+[target.'cfg(target_os = "windows")'.dependencies]
+serde_json = "1.0"
