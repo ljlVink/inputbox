@@ -1,4 +1,4 @@
-use inputbox::{InputBox, InputMode, backend::JXAScript};
+use inputbox::{InputBox, InputMode};
 
 fn main() {
     let input = InputBox::new()
@@ -8,9 +8,9 @@ fn main() {
         .mode(InputMode::Text)
         .width(400)
         .height(200)
-        .cancel_label("Cancel")
-        .ok_button("OK");
+        .cancel_label("Nope")
+        .ok_button("Fine");
 
-    let result = input.run_with(&JXAScript::default());
+    let result = input.run();
     println!("Result: {:?}", result);
 }

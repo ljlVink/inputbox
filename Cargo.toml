@@ -10,4 +10,6 @@ name = "macos-example"
 path = "examples/macos.rs"
 
 [dependencies]
+cfg-if = "1.0.4"
 serde_json = "1.0"
+which = "8.0.1"

@@ -85,22 +85,41 @@ impl Backend for Zenity {
 ///
 /// This backend uses the `yad` command-line tool to display input dialogs. It
 /// requires `yad` to be installed on the system.
+///
+/// # Limitations
+///
+/// - [`ok_label`](InputBox::ok_label) and
+///   [`cancel_label`](InputBox::cancel_label) MUST NOT contain the item
+///   separator character (default `!`). You can change the item separator using
+///   [`with_item_separator`](Yad::with_item_separator).
 #[derive(Clone, Debug)]
 pub struct Yad {
     path: Cow<'static, Path>,
+    item_separator: u8,
 }
 
 impl Yad {
     /// Creates a new backend using the default `yad` command.
     pub fn new() -> Self {
-        Self {
-            path: Path::new("yad").into(),
-        }
+        Self::custom(Path::new("yad"))
     }
 
     /// Creates a new backend with a custom path to the yad executable.
     pub fn custom(path: impl Into<Cow<'static, Path>>) -> Self {
-        Self { path: path.into() }
+        Self {
+            path: path.into(),
+            item_separator: b'!',
+        }
+    }
+
+    /// Sets the item separator for the Yad backend.
+    ///
+    /// Yad uses a custom item separator to distinguish between button labels,
+    /// and this separator MUST NOT appear in the button labels themselves. By
+    /// default, it is set to `!` (ASCII 33).
+    pub fn with_item_separator(mut self, sep: u8) -> Self {
+        self.item_separator = sep;
+        self
     }
 }
 
@@ -142,11 +161,23 @@ impl Backend for Yad {
         if let Some(title) = &input.title {
             cmd.args(["--title", title]);
         }
-        if let Some(label) = &input.cancel_label {
-            cmd.args(["--cancel-label", label]);
-        }
-        if let Some(label) = &input.ok_label {
-            cmd.args(["--ok-label", label]);
+        if input.cancel_label.is_some() || input.ok_label.is_some() {
+            let sep = char::from_u32(self.item_separator as _).unwrap();
+            cmd.args(["--item-separator", &sep.to_string()]);
+
+            cmd.arg("--button");
+            if let Some(label) = &input.cancel_label {
+                cmd.arg(format!("{label}{sep}gtk-cancel"));
+            } else {
+                cmd.arg("yad-cancel");
+            }
+
+            cmd.arg("--button");
+            if let Some(label) = &input.ok_label {
+                cmd.arg(format!("{label}{sep}gtk-ok"));
+            } else {
+                cmd.arg("yad-ok");
+            }
         }
         if let Some(width) = input.width {
             cmd.args(["--width", &width.to_string()]);
@@ -154,6 +185,7 @@ impl Backend for Yad {
         if let Some(height) = input.height {
             cmd.args(["--height", &height.to_string()]);
         }
+        dbg!(&cmd);
 
         run_command(&mut cmd, stdin, input.quiet)
     }

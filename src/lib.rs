@@ -24,7 +24,7 @@ pub mod backend;
 
 use std::borrow::Cow;
 
-use crate::backend::Backend;
+use crate::backend::{Backend, default_backend};
 
 /// Default title for the input box dialog.
 pub const DEFAULT_TITLE: &str = "Input";
@@ -51,6 +51,7 @@ pub enum InputMode {
 }
 
 impl InputMode {
+    #[allow(dead_code)]
     fn as_str(&self) -> &'static str {
         match self {
             InputMode::Text => "text",
@@ -199,10 +200,18 @@ impl<'a> InputBox<'a> {
         self
     }
 
+    /// Runs the input box with [`default_backend`] for the current platform.
+    ///
+    /// Returns `Some(input)` if the user clicked OK and entered text, or `None`
+    /// if the user clicked Cancel or closed the dialog.
+    pub fn run(&self) -> Option<String> {
+        default_backend().execute(self)
+    }
+
     /// Runs the input box with the specified backend.
     ///
-    /// Returns `Some(input)` if the user clicked OK and entered text,
-    /// or `None` if the user clicked Cancel or closed the dialog.
+    /// Returns `Some(input)` if the user clicked OK and entered text, or `None`
+    /// if the user clicked Cancel or closed the dialog.
     pub fn run_with<B: Backend>(&self, backend: &B) -> Option<String> {
         backend.execute(self)
     }

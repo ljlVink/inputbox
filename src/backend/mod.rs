@@ -25,13 +25,13 @@ use std::{
 
 use crate::InputBox;
 
-#[cfg(unix)]
-mod unix;
-#[cfg(unix)]
-pub use unix::{Yad, Zenity};
+mod general;
+use cfg_if::cfg_if;
+pub use general::{Yad, Zenity};
 
 #[cfg(target_os = "windows")]
 mod windows;
+use which::which;
 #[cfg(target_os = "windows")]
 pub use windows::PSScript;
 
@@ -82,4 +82,20 @@ pub trait Backend {
     /// Returns `Some(input)` if the user confirmed the dialog,
     /// or `None` if the user cancelled or the dialog failed.
     fn execute(&self, input: &InputBox) -> Option<String>;
+}
+
+pub fn default_backend() -> Box<dyn Backend> {
+    if which("yad").is_ok() {
+        return Box::new(Yad::default());
+    }
+
+    cfg_if! {
+        if #[cfg(target_os = "windows")] {
+            Box::new(PSScript::default())
+        } else if #[cfg(target_os = "macos")] {
+            Box::new(JXAScript::default())
+        } else {
+            Box::new(Zenity::default())
+        }
+    }
 }
