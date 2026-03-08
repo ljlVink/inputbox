@@ -6,20 +6,44 @@ use std::{
 };
 
 use block2::StackBlock;
-use objc2::MainThreadMarker;
+use objc2::{MainThreadMarker, rc::Retained};
 use objc2_core_foundation::{CGFloat, CGRect, CGSize};
 use objc2_foundation::{NSArray, NSObjectNSKeyValueCoding, NSRange, NSString, ns_string};
 use objc2_ui_kit::{
     NSLayoutConstraint, UIAlertAction, UIAlertActionStyle, UIAlertController,
     UIAlertControllerStyle, UIFont, UITextField, UITextInputTraits, UITextView, UIViewController,
 };
+use once_cell::sync::OnceCell;
 
 use crate::{DEFAULT_CANCEL_LABEL, DEFAULT_OK_LABEL, DEFAULT_TITLE, InputMode, backend::Backend};
 
+struct Global {
+    vc: Retained<UIViewController>,
+}
+
+unsafe impl Send for Global {}
+unsafe impl Sync for Global {}
+
+static GLOBAL: OnceCell<Global> = OnceCell::new();
+
 /// IOS backend for InputBox.
+///
+/// # Setup
+///
+/// To use this backend, you need do either of the following:
+///
+/// - Call [`IOS::set_view_controller`] to set a custom view controller before
+///   creating backend instances. (This enables [`crate::default_backend`] to
+///   work out of the box)
+///
+/// or
+///
+/// - Use [`IOS::custom`] to create backend instances with a custom view
+///   controller.
 ///
 /// # Warnings
 ///
+/// - You can only run this backend on main thread.
 /// - You may not call this backend in synchronous fashion (e.g. by calling
 ///   `execute` directly or using `show`), as it will block the main thread and
 ///   cause the app to freeze. Always use `execute_async` or `show_with_async`
@@ -27,8 +51,8 @@ use crate::{DEFAULT_CANCEL_LABEL, DEFAULT_OK_LABEL, DEFAULT_TITLE, InputMode, ba
 ///
 /// # Limitations
 ///
-/// - `width` option is mostly constrained by iOS alert limits (typically maxes out around 270pt on iPhones),
-///   but `height` is respected in Multiline mode.
+/// - `width` and `height` only affect the size of the text area when using
+///   `InputMode::Multiline`.
 /// - `auto_wrap` is ignored (iOS `UITextView` wraps by default).
 ///
 /// # Defaults
@@ -41,10 +65,35 @@ pub struct IOS<'a> {
     view_ctrl: &'a UIViewController,
 }
 
+impl Default for IOS<'_> {
+    fn default() -> Self {
+        let _mtm = MainThreadMarker::new().expect("IOS backend must be created on main thread");
+        let global = GLOBAL.get().expect("IOS backend not initialized. Call IOS");
+        Self {
+            view_ctrl: &global.vc,
+        }
+    }
+}
+
 impl<'a> IOS<'a> {
+    /// Creates a new IOS backend using the view controller set by `set_view_controller`.
+    ///
+    /// See the struct-level documentation for more details.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
     /// Creates a new IOS backend with the given view controller.
-    pub fn new(view_ctrl: &'a UIViewController) -> Self {
+    pub fn custom(view_ctrl: &'a UIViewController) -> Self {
         Self { view_ctrl }
+    }
+
+    /// Sets the view controller to be used by the backend. This must be called before
+    /// creating backend instances
+    pub fn set_view_controller(view_ctrl: Retained<UIViewController>) {
+        let _mtm =
+            MainThreadMarker::new().expect("set_view_controller must be called on main thread");
+        let _ = GLOBAL.set(Global { vc: view_ctrl });
     }
 }
 
@@ -56,7 +105,7 @@ impl<'a> Backend for IOS<'a> {
     ) -> io::Result<()> {
         let callback = Arc::new(Mutex::new(Some(callback)));
 
-        let mtm = MainThreadMarker::new().unwrap();
+        let mtm = MainThreadMarker::new().expect("IOS backend can only be used on main thread");
 
         let title = input.title.as_deref().unwrap_or(DEFAULT_TITLE);
         let prompt_ns = input.prompt.as_deref().map(NSString::from_str);
