@@ -44,6 +44,11 @@ mod android;
 #[cfg(target_os = "android")]
 pub use android::Android;
 
+#[cfg(target_os = "ios")]
+mod ios;
+#[cfg(target_os = "ios")]
+pub use ios::IOS;
+
 /// Executes a command and returns its output.
 ///
 /// Internal helper function that runs a command with optional stdin input
