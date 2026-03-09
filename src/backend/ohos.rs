@@ -2,10 +2,8 @@
 //!
 //! This backend uses NAPI to communicate with ArkTS layer for showing native dialogs.
 
-use std::collections::HashMap;
 use std::io;
-use std::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Mutex, OnceLock};
+use std::sync::OnceLock;
 
 use napi_derive_ohos::napi;
 use napi_ohos::{
@@ -16,25 +14,15 @@ use napi_ohos::{
 use super::Backend;
 use crate::{DEFAULT_CANCEL_LABEL, DEFAULT_OK_LABEL, DEFAULT_TITLE, InputBox, InputMode};
 
-static REQUEST_ID_COUNTER: AtomicU64 = AtomicU64::new(1);
-
-static PENDING_CALLBACKS: OnceLock<
-    Mutex<HashMap<u64, Box<dyn FnOnce(io::Result<Option<String>>) + Send>>>,
-> = OnceLock::new();
-
 static REQUEST_CALLBACK: OnceLock<
     ThreadsafeFunction<InputBoxRequest, (), InputBoxRequest, napi_ohos::Status, false, false, 16>,
 > = OnceLock::new();
 
-fn get_pending_callbacks()
--> &'static Mutex<HashMap<u64, Box<dyn FnOnce(io::Result<Option<String>>) + Send>>> {
-    PENDING_CALLBACKS.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
 #[napi(object)]
 #[derive(Clone)]
 pub struct InputBoxRequest {
-    pub request_id: i64,
+    /// Callback pointer as i64 (leaked Box<dyn FnOnce>)
+    pub callback_ptr: i64,
     pub title: String,
     pub prompt: Option<String>,
     pub default_value: String,
@@ -47,9 +35,11 @@ pub struct InputBoxRequest {
     pub scroll_to_end: bool,
 }
 
+#[allow(dead_code)]
 #[napi(object)]
 pub struct InputBoxResponse {
-    pub request_id: i64,
+    /// Callback pointer as i64 (to recover the leaked Box)
+    pub callback_ptr: i64,
     pub text: Option<String>,
     pub error: Option<String>,
 }
@@ -76,7 +66,7 @@ pub struct InputBoxResponse {
 ///   // Show your custom dialog using request.title, request.prompt, etc.
 ///   // When user confirms or cancels, call:
 ///   inputbox.onInputboxResponse({
-///     requestId: request.requestId,
+///     callbackPtr: request.callbackPtr,
 ///     text: userInput,  // or null if cancelled
 ///     error: null
 ///   });
@@ -115,11 +105,13 @@ impl Backend for OHOS {
                 "OHOS callback not registered. Call registerInputboxCallback from ArkTS first.",
             )
         })?;
-        let request_id = REQUEST_ID_COUNTER.fetch_add(1, Ordering::SeqCst);
-        let mut callbacks = get_pending_callbacks().lock().unwrap();
-        callbacks.insert(request_id, callback);
+
+        // Leak the callback and pass its pointer to ArkTS
+        // ArkTS will call on_inputbox_response with this pointer to invoke the callback
+        let callback_ptr = Box::into_raw(Box::new(callback)) as i64;
+
         let request = InputBoxRequest {
-            request_id: request_id as i64,
+            callback_ptr,
             title: input.title.as_deref().unwrap_or(DEFAULT_TITLE).to_string(),
             prompt: input.prompt.as_deref().map(|s| s.to_string()),
             default_value: input.default.to_string(),
@@ -148,14 +140,16 @@ impl Backend for OHOS {
         // Send request to ArkTS layer
         let status = tsfn.call(request, ThreadsafeFunctionCallMode::NonBlocking);
         if status != napi_ohos::Status::Ok {
-            // Remove callback if send failed
-            let mut callbacks = get_pending_callbacks().lock().unwrap();
-            if let Some(cb) = callbacks.remove(&request_id) {
-                cb(Err(io::Error::other(format!(
-                    "Failed to send request to ArkTS: {:?}",
-                    status
-                ))));
-            }
+            // Recover and call the callback with error if send failed
+            let callback = unsafe {
+                Box::from_raw(
+                    callback_ptr as *mut Box<dyn FnOnce(io::Result<Option<String>>) + Send>,
+                )
+            };
+            callback(Err(io::Error::other(format!(
+                "Failed to send request to ArkTS: {:?}",
+                status
+            ))));
         }
 
         Ok(())
@@ -176,6 +170,7 @@ impl Backend for OHOS {
 ///   // Display dialog and handle user input
 /// });
 /// ```
+#[allow(dead_code)]
 #[napi]
 pub fn register_inputbox_callback(
     callback: Function<InputBoxRequest, ()>,
@@ -204,33 +199,31 @@ pub fn register_inputbox_callback(
 ///
 /// // When user clicks OK:
 /// inputbox.onInputboxResponse({
-///   requestId: request.requestId,
+///   callbackPtr: request.callbackPtr,
 ///   text: userInputText,
 ///   error: null
 /// });
 ///
 /// // When user clicks Cancel:
 /// inputbox.onInputboxResponse({
-///   requestId: request.requestId,
+///   callbackPtr: request.callbackPtr,
 ///   text: null,
 ///   error: null
 /// });
 /// ```
+#[allow(dead_code)]
 #[napi]
 pub fn on_inputbox_response(response: InputBoxResponse) {
-    let request_id = response.request_id as u64;
-
-    // Retrieve and remove the pending callback
-    let callback = {
-        let mut callbacks = get_pending_callbacks().lock().unwrap();
-        callbacks.remove(&request_id)
+    // Recover the leaked callback from the pointer passed by ArkTS
+    let callback = unsafe {
+        Box::from_raw(
+            response.callback_ptr as *mut Box<dyn FnOnce(io::Result<Option<String>>) + Send>,
+        )
     };
 
-    if let Some(cb) = callback {
-        if let Some(error) = response.error {
-            cb(Err(io::Error::other(error)));
-        } else {
-            cb(Ok(response.text));
-        }
+    if let Some(error) = response.error {
+        callback(Err(io::Error::other(error)));
+    } else {
+        callback(Ok(response.text));
     }
 }
