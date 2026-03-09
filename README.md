@@ -106,20 +106,21 @@ InputBox::new()
 
 - **Multiple input modes** — text, password, or multiline
 - **Highly customizable** — title, prompt, button labels, dimensions, and more
-- **Works on most platforms** — Windows, macOS, Linux, Android, and iOS
+- **Works on most platforms** — Windows, macOS, Linux, Android, iOS nad OpenHarmony
 - **Pluggable backends** — use a specific backend or let the library pick
 - **Synchronous and asynchronous** — safe sync on most platforms, async required on iOS
 
 ## Backends
 
-| Backend     | Platform | How it works                                    |
-| ----------- | -------- | ----------------------------------------------- |
-| `PSScript`  | Windows  | PowerShell + WinForms, no extra install needed  |
-| `JXAScript` | macOS    | `osascript` JXA, built into the OS              |
-| `Android`   | Android  | AAR + JNI to show an Android AlertDialog        |
-| `IOS`       | iOS      | UIKit alert                                     |
-| `Yad`       | Linux    | [`yad`](https://github.com/v1cont/yad)          |
-| `Zenity`    | Linux    | `zenity` — fallback on GNOME systems            |
+| Backend     | Platform    | How it works                                    |
+| ----------- | ----------- | ----------------------------------------------- |
+| `PSScript`  | Windows     | PowerShell + WinForms, no extra install needed  |
+| `JXAScript` | macOS       | `osascript` JXA, built into the OS              |
+| `Android`   | Android     | AAR + JNI to show an Android AlertDialog        |
+| `IOS`       | iOS         | UIKit alert                                     |
+| `OHOS`      | OpenHarmony | NAPI + ArkTS dialog                             |
+| `Yad`       | Linux       | [`yad`](https://github.com/v1cont/yad)          |
+| `Zenity`    | Linux       | `zenity` — fallback on GNOME systems            |
 
 ### Linux Installation
 
