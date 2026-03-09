@@ -40,7 +40,8 @@ fn main() {
     let result = InputBox::new()
         .title("Greetings")
         .prompt("What's your name?")
-        .run();
+        .show()
+        .unwrap();
 
     match result {
         Some(name) => println!("Hello, {name}!"),

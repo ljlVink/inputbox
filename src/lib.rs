@@ -10,10 +10,21 @@
 //! use inputbox::InputBox;
 //!
 //! let input = InputBox::new().title("Title").prompt("Prompt").default_text("Default");
-//! let result: Option<String> = input.run();
+//! let result: Option<String> = input.show().unwrap();
 //! // Or use a specific backend:
-//! // let result = input.run_with(&inputbox::backend::Zenity::default());
+//! // let result = input.show_with(&inputbox::backend::Zenity::default());
 //! println!("Result: {:?}", result);
+//! ```
+//!
+//! Asynchronous versions of the show methods are also available:
+//!
+//! ```rust,ignore
+//! use inputbox::InputBox;
+//!
+//! let input = InputBox::new().title("Title").prompt("Prompt").default_text("Default");
+//! input.show_async(|result| {
+//!   println!("Async result: {:?}", result);
+//! });
 //! ```
 //!
 //! See [`crate::backend`] for details on the available backends and their

@@ -3,12 +3,14 @@
 //! This module provides platform-specific backends for showing input dialogs:
 //! - `PSScript`: PowerShell script backend for Windows (Windows only)
 //! - `JXAScript`: JavaScript for Automation backend for macOS (macOS only)
+//! - `Android`: Android backend using JNI (Android only)
+//! - `IOS`: iOS backend using UIKit (iOS only)
 //! - `Yad`: [`yad`](https://github.com/v1cont/yad) backend.
 //! - `Zenity`: Zenity backend.
 //!
 //! # Default behaviors
 //!
-//! Many fields in [`InputBox`] are optional and will have default behavior. For
+//! Many fields in [`InputBox`] are optional and have default behavior. For
 //! example, if `title` is not set, a default title will be used. However the
 //! exact default values and behaviors may vary between backends (some uses
 //! constants defined in this crate like
@@ -158,6 +160,8 @@ pub fn default_backend() -> Box<dyn Backend> {
             Box::new(JXAScript::default())
         } else if #[cfg(target_os = "android")] {
             Box::new(Android::default())
+        } else if #[cfg(target_os = "ios")] {
+            Box::new(IOS::default())
         } else {
             Box::new(Zenity::default())
         }
