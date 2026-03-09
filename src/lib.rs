@@ -1,8 +1,8 @@
 //! Cross-platform input box library.
 //!
 //! The entry point is the [`InputBox`] struct, which you can configure using
-//! the builder pattern and then call `run()` to display the input dialog and
-//! get the user's input.
+//! the builder pattern and then call [`InputBox::show`] to display the input
+//! dialog and get the user's input.
 //!
 //! # Usage
 //!
@@ -94,11 +94,8 @@ impl InputMode {
 /// **On most platforms** the sync methods are safe to call from any thread and
 /// will simply block until the user closes the dialog.
 ///
-/// **On iOS**, however, the sync methods **must not be used**. The iOS backend
-/// (`IOS`) must run on the main thread, and blocking that thread with
-/// `rx.recv()` prevents UIKit's run loop from processing events — the alert
-/// will never appear and the call will deadlock. Always use the async variants
-/// on iOS.
+/// **On iOS**, however, the sync methods **must not be used**. See `IOS`
+/// backend documentation for more info.
 #[derive(Clone, Debug)]
 pub struct InputBox<'a> {
     /// The title of the dialog window.
@@ -254,7 +251,7 @@ impl<'a> InputBox<'a> {
     ///
     /// # Warning
     ///
-    /// Do not use this method on iOS. See struct-level documentation for details.
+    /// Do not use this method on iOS. See `IOS` backend documentation for more info.
     pub fn show(&self) -> io::Result<Option<String>> {
         default_backend().execute(self)
     }
@@ -267,7 +264,7 @@ impl<'a> InputBox<'a> {
     ///
     /// # Warning: do not use on iOS
     ///
-    ///  Do not use this method on iOS. See struct-level documentation for details.
+    ///  Do not use this method on iOS. See `IOS` backend documentation for more info.
     pub fn show_with(&self, backend: &dyn Backend) -> io::Result<Option<String>> {
         backend.execute(self)
     }
