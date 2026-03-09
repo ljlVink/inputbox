@@ -2,7 +2,7 @@
 
 [![crates.io](https://img.shields.io/crates/v/inputbox)](https://crates.io/crates/inputbox)
 [![docs.rs](https://img.shields.io/docsrs/inputbox)](https://docs.rs/inputbox)
-[![CI](https://github.com/Mivik/inputbox/actions/workflows/ci.yml/badge.svg)](https://github.com/Mivik/inputbox/actions)
+[![CI](https://github.com/Mivik/inputbox/actions/workflows/check.yml/badge.svg)](https://github.com/Mivik/inputbox/actions)
 
 > A cross-platform, native GUI input box for Rust. Yes, finally.
 
