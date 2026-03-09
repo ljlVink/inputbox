@@ -248,7 +248,8 @@ function runDialog(dialog) {
   dialog.window.makeFirstResponder(dialog.inputBundle.focusView);
 
   var result = app.runModalForWindow(dialog.window);
-  dialog.window.close();
+  dialog.window.orderOut(null);
+
   if (result === 0) throw new Error("cancelled");
   return dialog.inputBundle.readValue();
 }
