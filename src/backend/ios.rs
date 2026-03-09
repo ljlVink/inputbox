@@ -6,7 +6,7 @@ use std::{
 };
 
 use block2::StackBlock;
-use objc2::MainThreadMarker;
+use objc2::{MainThreadMarker, rc::Retained};
 use objc2_core_foundation::{CGFloat, CGRect, CGSize};
 use objc2_foundation::{NSArray, NSObjectNSKeyValueCoding, NSRange, NSString, ns_string};
 use objc2_ui_kit::{
@@ -198,20 +198,29 @@ impl Backend for IOS {
         );
         alert.addAction(&ok_action);
 
-        let key_window = UIApplication::sharedApplication(mtm)
-            .connectedScenes()
-            .iter()
-            .filter_map(|scene| scene.downcast::<UIWindowScene>().ok())
-            .find_map(|scene| scene.keyWindow())
-            .ok_or_else(|| io::Error::other("no active window found"))?;
-        let mut top_vc = key_window
-            .rootViewController()
-            .ok_or_else(|| io::Error::other("no root ViewController found for key window"))?;
-        while let Some(presented) = top_vc.presentedViewController() {
-            top_vc = presented;
-        }
+        let top_vc = get_top_view_controller(mtm).ok_or_else(|| {
+            io::Error::other(
+                "no active window or view controller found to present the input dialog",
+            )
+        })?;
         top_vc.presentViewController_animated_completion(&alert, true, None);
 
         Ok(())
     }
+}
+
+/// Helper function to get the topmost view controller for presenting the alert.
+///
+/// Returns `None` if no active window or view controller is found.
+pub fn get_top_view_controller(mtm: MainThreadMarker) -> Option<Retained<UIViewController>> {
+    let key_window = UIApplication::sharedApplication(mtm)
+        .connectedScenes()
+        .iter()
+        .filter_map(|scene| scene.downcast::<UIWindowScene>().ok())
+        .find_map(|scene| scene.keyWindow())?;
+    let mut top_vc = key_window.rootViewController()?;
+    while let Some(presented) = top_vc.presentedViewController() {
+        top_vc = presented;
+    }
+    Some(top_vc)
 }
