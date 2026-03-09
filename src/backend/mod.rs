@@ -54,6 +54,11 @@ mod ios;
 #[cfg(target_os = "ios")]
 pub use ios::IOS;
 
+#[cfg(target_env = "ohos")]
+mod ohos;
+#[cfg(target_env = "ohos")]
+pub use ohos::OHOS;
+
 /// Trait for platform-specific input box backends.
 ///
 /// Implement this trait to add support for different dialog implementations.
@@ -162,6 +167,8 @@ pub fn default_backend() -> Box<dyn Backend> {
             Box::new(Android::default())
         } else if #[cfg(target_os = "ios")] {
             Box::new(IOS::default())
+        } else if #[cfg(target_env = "ohos")] {
+            Box::new(OHOS::default())
         } else {
             Box::new(Zenity::default())
         }
