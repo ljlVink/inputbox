@@ -158,8 +158,8 @@ impl Backend for OHOS {
 
 /// Register the ArkTS callback handler for input box requests.
 ///
-/// This function must be called from ArkTS before using the InputBox API.
-/// The callback will receive [`InputBoxRequest`] objects when `show()` is called.
+/// This function must be called from ArkTS before using the InputBox API. The
+/// callback will receive [`InputBoxRequest`] objects when `show()` is called.
 ///
 /// # Example
 ///
