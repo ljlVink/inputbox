@@ -77,7 +77,8 @@ impl InputMode {
 /// ```rust
 /// use inputbox::{InputBox, InputMode};
 ///
-/// let input = InputBox::new("Title", "Prompt")
+/// let input = InputBox::new()
+///     .title("Title")
 ///     .default("default value")
 ///     .mode(InputMode::Text)
 ///     .ok_label("Submit")

@@ -1,15 +1,16 @@
 [package]
 name = "inputbox"
 version = "0.0.1"
-edition = "2024"
+edition = "2021"
 authors = ["Mivik <mivikq@gmail.com>", "sjfhsjfh <sjfhsjfh@qq.com>"]
 description = "A cross-platform, native GUI input box."
 license = "MIT"
 repository = "https://github.com/Mivik/inputbox"
 homepage = "https://github.com/Mivik/inputbox"
 documentation = "https://docs.rs/inputbox"
-categories = []
+categories = ["gui", "command-line-interface"]
 keywords = ["ui", "dialog", "input", "native"]
+rust-version = "1.71.0"
 
 [lib]
 
