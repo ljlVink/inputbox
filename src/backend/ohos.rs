@@ -116,12 +116,7 @@ impl Backend for OHOS {
             title: input.title.as_deref().unwrap_or(DEFAULT_TITLE).to_string(),
             prompt: input.prompt.as_deref().map(|s| s.to_string()),
             default_value: input.default.to_string(),
-            mode: match input.mode {
-                InputMode::Text => "text",
-                InputMode::Password => "password",
-                InputMode::Multiline => "multiline",
-            }
-            .to_string(),
+            mode: input.mode.as_str().to_owned(),
             ok_label: input
                 .ok_label
                 .as_deref()
